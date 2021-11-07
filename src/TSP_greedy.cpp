@@ -34,9 +34,9 @@ float TSPgreedy(std::vector<Node> nodes, std::vector<Node>& visited){
             }
         }
 
-        Node nearestNode = notVisited[nearestNodeIndex];
+        currentNode = notVisited[nearestNodeIndex];
         notVisited.erase(notVisited.begin() + nearestNodeIndex);
-        visited.push_back(nearestNode);
+        visited.push_back(currentNode);
         distanceTraveled += shortestDistance;
     }
 
