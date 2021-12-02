@@ -68,7 +68,10 @@ std::vector<Node> LoadNodes(std::string testPath) {
 }
 
 int main() {
-	std::string testPath; //= "C:\\Users\\student\\Documents\\Mateusz Oleszek\\OptymalizacjaKombinatoryczna-master\\tests\\test_10.txt";// "F:\\Programowanie\\Studia\\OptymalizacjaKombinatoryczna\\tests\\test_10.txt";
+	std::string testPath= "F:\\Programowanie\\Studia\\OptymalizacjaKombinatoryczna\\tests\\test_10.";
+	// = "C:\\Users\\student\\Documents\\Mateusz Oleszek\\OptymalizacjaKombinatoryczna-master\\tests\\test_10.txt";
+	// "F:\\Programowanie\\Studia\\OptymalizacjaKombinatoryczna\\tests\\test_10.txt";
+	
 	std::cin >> testPath;
 
 	std::vector<Node> nodes = LoadNodes(testPath);
