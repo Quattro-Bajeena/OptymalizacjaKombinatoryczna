@@ -9,6 +9,8 @@
 #include <random>
 #include <ctime>
 #include <cstdlib>
+#include <string>
+#include <chrono>
 
 struct Node
 {
@@ -33,14 +35,14 @@ float Distance(int a, int b, const std::vector<Node>& nodes){
 }
 
 float AllPossiblePathsPower(int start, 
-                    float distanceFactor, float pheromoneFactor, 
+                    float visibilityFactor, float pheromoneFactor, 
                     const std::vector<std::vector<float>>& edgeCosts, const std::vector<std::vector<float>>& edgePheromones, 
                     const std::vector<int>& visitedNodes){
 
     float allPosiblePathsPower = 0;
     for(int i = 0; i < edgePheromones.size(); i++){
         if(i != start && (std::find(visitedNodes.begin(), visitedNodes.end(), i) == visitedNodes.end()) ){
-            allPosiblePathsPower += std::pow(edgePheromones[start][i], pheromoneFactor) * std::pow(edgeCosts[start][i], distanceFactor);
+            allPosiblePathsPower += std::pow(edgePheromones[start][i], pheromoneFactor) * std::pow(edgeCosts[start][i], visibilityFactor);
         }
     }
     return allPosiblePathsPower;
@@ -49,11 +51,11 @@ float AllPossiblePathsPower(int start,
 
 float PathPropability(
                     int start, int destination, 
-                    float distanceFactor, float pheromoneFactor, 
+                    float visibilityFactor, float pheromoneFactor, 
                     const std::vector<std::vector<float>>& edgeCosts, const std::vector<std::vector<float>>& edgePheromones, 
                     float allPossiblePathsPower){
 
-    float pathPower = std::pow(edgePheromones[start][destination], pheromoneFactor) * std::pow(edgeCosts[start][destination], distanceFactor);
+    float pathPower = std::pow(edgePheromones[start][destination], pheromoneFactor) * std::pow(edgeCosts[start][destination], visibilityFactor);
     return pathPower / allPossiblePathsPower;
 }
 
@@ -94,12 +96,12 @@ std::pair<float, std::vector<int>> TSPAnt(std::vector<Node> nodes) {
 	std::vector<int> shortestPath;
 
     int nodeNum = nodes.size();
-    const float pheromoneAddingRate = 1;
-    const float evaporationRate = 0.5;
-    const float distanceFactor = 1;
-    const float pheromoneFactor = 1;
-    const int antsCount = 100;
-    const int turnCount = 100;
+    const float pheromoneAddingRate = 100; // Q - quantity of trail laid
+    const float evaporationRate = 0.5; // p - trail persitance
+    const float pheromoneFactor = 1; // alpha - relative importance of trail
+    const float visibilityFactor = 5; // veta - relative importance of visibility
+    const int antsCount = 20;
+    const int turnCount = 200;
 
     std::vector<Ant> ants(antsCount);
 
@@ -140,7 +142,7 @@ std::pair<float, std::vector<int>> TSPAnt(std::vector<Node> nodes) {
             for(int i = 1; i < nodeNum; i++){
 
 				int from = ant.currentNode;
-				const float allPossiblePathsPower = AllPossiblePathsPower(from, distanceFactor, pheromoneFactor, edgeCosts, edgePheromones, ant.visitedNodes);
+				const float allPossiblePathsPower = AllPossiblePathsPower(from, visibilityFactor, pheromoneFactor, edgeCosts, edgePheromones, ant.visitedNodes);
 
 				std::vector<float> propabilities(nodeNum);
 
@@ -155,7 +157,7 @@ std::pair<float, std::vector<int>> TSPAnt(std::vector<Node> nodes) {
 					else{
 						propabilities[possibleDestination] = PathPropability(
 														from, possibleDestination, 
-														distanceFactor, pheromoneFactor,
+														visibilityFactor, pheromoneFactor,
 														edgeCosts, edgePheromones, allPossiblePathsPower);
 					}
 				}
@@ -217,19 +219,24 @@ std::vector<Node> LoadNodes(std::string testPath) {
 
 int main() {
     srand(time(NULL));
-	std::string testPath; 
+
+	std::string testPath; // = "F:\\Programowanie\\Studia\\OptymalizacjaKombinatoryczna\\tests\\random\\test_10.txt";
+    std::getline(std::cin, testPath);
 	// = "C:\\Users\\student\\Documents\\Mateusz Oleszek\\OptymalizacjaKombinatoryczna-master\\tests\\test_10.txt";
-	// "F:\\Programowanie\\Studia\\OptymalizacjaKombinatoryczna\\tests\\test_10.txt";
-	
-	std::cin >> testPath;
+	// = "F:\\Programowanie\\Studia\\OptymalizacjaKombinatoryczna\\tests\\random\\test_10.txt";
+    
 
 	std::vector<Node> nodes = LoadNodes(testPath);
 
-	
+	auto begin = std::chrono::steady_clock::now();
 	std::pair<float, std::vector<int>> results = TSPAnt(nodes);
+    auto end = std::chrono::steady_clock::now();
+
 	float distanceTraveled = results.first;
 	std::vector<int> visited = results.second;
 
+    std::cout<<nodes.size()<<"\n";
+    std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() <<"\n";
 	std::cout << distanceTraveled << "\n";
 	for (int node : visited) {
 		std::cout << nodes[node].x << ";" << nodes[node].y << "\n";
