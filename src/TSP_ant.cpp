@@ -89,19 +89,25 @@ float NewPheromones(int i, int j, std::vector<Ant> ants, float pheromoneAddingRa
     return newPheromones;
 }
 
+struct TSPResults{
+    long turns;
+    float distance;
+    std::vector<int> path;
+};
 
+TSPResults TSPAnt(std::vector<Node> nodes, float maxTime) {
+    const auto clockStart = std::chrono::system_clock::now();
 
-std::pair<float, std::vector<int>> TSPAnt(std::vector<Node> nodes) {
 	float shortestDistance = std::numeric_limits<float>::max();
 	std::vector<int> shortestPath;
 
     int nodeNum = nodes.size();
     const float pheromoneAddingRate = 100; // Q - quantity of trail laid
-    const float evaporationRate = 0.5; // p - trail persitance
+    const float evaporationRate = 0.6; // p - trail persitance
     const float pheromoneFactor = 1; // alpha - relative importance of trail
-    const float visibilityFactor = 5; // veta - relative importance of visibility
+    const float visibilityFactor = 4; // beta - relative importance of visibility
     const int antsCount = 20;
-    const int turnCount = 200;
+    long turns = 0;
 
     std::vector<Ant> ants(antsCount);
 
@@ -130,7 +136,10 @@ std::pair<float, std::vector<int>> TSPAnt(std::vector<Node> nodes) {
         }
     }
 
-    for(int turn = 0; turn < turnCount; turn++){
+    double elapsedMiliseconds = std::chrono::duration<double, std::milli>(std::chrono::system_clock::now() - clockStart).count();
+    while(elapsedMiliseconds < maxTime * 1000){
+        turns += 1;
+
         // Ant movements
         for(Ant& ant : ants){
 			ant.cumulativeDistance = 0;
@@ -192,10 +201,11 @@ std::pair<float, std::vector<int>> TSPAnt(std::vector<Node> nodes) {
                 edgePheromones[j][i] = currentPheronomeLevel;
             }
         }
-        
+
+        elapsedMiliseconds = std::chrono::duration<double, std::milli>(std::chrono::system_clock::now() - clockStart).count();
     }
 
-	return std::make_pair(shortestDistance, shortestPath);
+	return {turns, shortestDistance, shortestPath};
 }
 
 std::vector<Node> LoadNodes(std::string testPath) {
@@ -220,25 +230,22 @@ std::vector<Node> LoadNodes(std::string testPath) {
 int main() {
     srand(time(NULL));
 
-	std::string testPath; // = "F:\\Programowanie\\Studia\\OptymalizacjaKombinatoryczna\\tests\\random\\test_10.txt";
+	std::string testPath; 
+    float maxTime;
+
     std::getline(std::cin, testPath);
-	// = "C:\\Users\\student\\Documents\\Mateusz Oleszek\\OptymalizacjaKombinatoryczna-master\\tests\\test_10.txt";
-	// = "F:\\Programowanie\\Studia\\OptymalizacjaKombinatoryczna\\tests\\random\\test_10.txt";
+    std::cin >> maxTime;
+	//testPath = "F:\\Programowanie\\Studia\\OptymalizacjaKombinatoryczna\\tests\\instances\\berlin52.txt";
     
 
 	std::vector<Node> nodes = LoadNodes(testPath);
 
-	auto begin = std::chrono::steady_clock::now();
-	std::pair<float, std::vector<int>> results = TSPAnt(nodes);
-    auto end = std::chrono::steady_clock::now();
-
-	float distanceTraveled = results.first;
-	std::vector<int> visited = results.second;
+	TSPResults results = TSPAnt(nodes, maxTime);
 
     std::cout<<nodes.size()<<"\n";
-    std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() <<"\n";
-	std::cout << distanceTraveled << "\n";
-	for (int node : visited) {
+    std::cout << results.turns <<"\n";
+	std::cout << results.distance << "\n";
+	for (int node : results.path) {
 		std::cout << nodes[node].x << ";" << nodes[node].y << "\n";
 	}
 
