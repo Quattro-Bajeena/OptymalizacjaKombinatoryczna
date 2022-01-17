@@ -95,7 +95,7 @@ struct TSPResults{
     std::vector<int> path;
     double time;
     std::vector<std::vector<int>> shortestPaths;
-    std::vector<int> shortestDistances;
+    std::vector<float> shortestDistances;
 };
 
 TSPResults TSPAnt(std::vector<Node> nodes, float maxTime) {
@@ -104,17 +104,19 @@ TSPResults TSPAnt(std::vector<Node> nodes, float maxTime) {
 	float shortestDistance = std::numeric_limits<float>::max();
 	std::vector<int> shortestPath;
 
-    std::vector<std::vector<int>> shortestPaths;
-    std::vector<int> shortestDistances;
+    
 
     int nodeNum = nodes.size();
     const float pheromoneAddingRate = 100; // Q - quantity of trail laid
     const float evaporationRate = 0.6; // p - trail persitance
     const float pheromoneFactor = 1; // alpha - relative importance of trail
     const float visibilityFactor = 4; // beta - relative importance of visibility
-    const int turnCount = 10;
+    const int turnCount = 100;
     const int antsCount = 20;
     long turns = 0;
+
+    std::vector<std::vector<int>> shortestPaths(turnCount);
+    std::vector<float> shortestDistances(turnCount, -1);
 
     
 
@@ -146,15 +148,7 @@ TSPResults TSPAnt(std::vector<Node> nodes, float maxTime) {
     }
 
     // if you want to run for set num of turns cut and paste the main loop here
-    for(int i = 0; i < turnCount; i++){
-
-    }
-
-    const auto clockStart = std::chrono::system_clock::now();
-    double elapsedMiliseconds = 0;
-    while(elapsedMiliseconds < maxTime * 1000){
-        turns += 1;
-
+    for(int t = 0; t < turnCount; t++){
         // Ant movements
         for(Ant& ant : ants){
 			ant.cumulativeDistance = 0;
@@ -200,8 +194,19 @@ TSPResults TSPAnt(std::vector<Node> nodes, float maxTime) {
 			if(ant.cumulativeDistance < shortestDistance){
 				shortestDistance = ant.cumulativeDistance;
 				shortestPath = ant.visitedNodes;
+
+                shortestDistances[t] = shortestDistance;
+                shortestPaths[t] = shortestPath;
+                
 			}
         }
+
+        if(shortestDistances[t] == -1){
+            shortestDistances[t] = shortestDistances[t-1];
+            shortestPaths[t] = shortestPaths[t-1];
+        }
+
+        
         
         // Updating pheromone levels
         for(int i = 0; i < nodeNum; i++){
@@ -216,11 +221,18 @@ TSPResults TSPAnt(std::vector<Node> nodes, float maxTime) {
                 edgePheromones[j][i] = currentPheronomeLevel;
             }
         }
-
-        elapsedMiliseconds = std::chrono::duration<double, std::milli>(std::chrono::system_clock::now() - clockStart).count();
     }
 
-	return {turns, shortestDistance, shortestPath, elapsedMiliseconds, shortestPaths, shortestDistances};
+    TSPResults results;
+    results.turns = turnCount;
+    results.distance = shortestDistance;
+    results.path = shortestPath;
+    results.shortestPaths = shortestPaths;
+    results.shortestDistances = shortestDistances;
+    
+
+
+	return results;
 }
 
 std::vector<Node> LoadNodes(std::string testPath) {
@@ -245,23 +257,31 @@ std::vector<Node> LoadNodes(std::string testPath) {
 int main() {
     srand(time(NULL));
 
-	std::string testPath; 
+	std::string testPath; //= "f:\\Programowanie\\Studia\\OptymalizacjaKombinatoryczna\\tests\\random\\test_10.txt";
     float maxTime;
 
     std::getline(std::cin, testPath);
-    std::cin >> maxTime;
+    //std::cin >> maxTime;
 	//testPath = "F:\\Programowanie\\Studia\\OptymalizacjaKombinatoryczna\\tests\\instances\\berlin52.txt";
     
 
 	std::vector<Node> nodes = LoadNodes(testPath);
-
+    std::cout<<nodes.size()<<"\n";
 	TSPResults results = TSPAnt(nodes, maxTime);
 
-    std::cout<<nodes.size()<<"\n";
-    std::cout << results.turns <<"\n";
-	std::cout << results.distance << "\n";
-	for (int node : results.path) {
-		std::cout << nodes[node].x << ";" << nodes[node].y << "\n";
-	}
+    //std::cout<<nodes.size()<<",";
+    //std::cout << results.turns <<"\n";
+    for(int i = 0; i < results.shortestDistances.size(); i++){
+        std::cout << results.shortestDistances[i] << ",";
+
+        for (int node : results.shortestPaths[i]) {
+		    std::cout << nodes[node].x << ";" << nodes[node].y << ",";
+	    }
+        std::cout<<"\n";
+
+    }
+    
+	
+	
 
 }
